@@ -109,7 +109,7 @@ class GreedyMemoryPlanner : public MicroMemoryPlanner {
     return per_buffer_size;
   }
 
- private:
+// private:
   // Whether a buffer is active in a given time range.
   bool DoesEntryOverlapInTime(const ListEntry* entry, const int first_time_used,
                               const int last_time_used) const;

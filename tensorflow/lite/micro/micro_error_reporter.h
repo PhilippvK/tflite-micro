@@ -47,7 +47,7 @@ class MicroErrorReporter : public ErrorReporter {
   ~MicroErrorReporter() override {}
   int Report(const char* format, va_list args) override;
 
- private:
+// private:
   TF_LITE_REMOVE_VIRTUAL_DELETE
 };
 
