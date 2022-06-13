@@ -20,7 +20,9 @@ limitations under the License.
 #include "tensorflow/lite/micro/micro_allocator.h"
 #include "tensorflow/lite/micro/micro_arena_constants.h"
 #include "tensorflow/lite/micro/micro_error_reporter.h"
-
+#if TF_LITE_MICRO_AUTO_DUMP_POINTER_TABLES || TF_LITE_MICRO_AUTO_DUMPED_OPDATA
+#include  "tflite_u_preint/static_init_support.h"
+#endif
 namespace tflite {
 namespace {
 // Dummy static variables to allow creation of dummy MicroAllocator.
@@ -32,7 +34,7 @@ static uint8_t dummy_tensor_arena[KDummyTensorArenaSize];
 FakeMicroContext::FakeMicroContext(TfLiteTensor* tensors,
                                    SimpleMemoryAllocator* allocator,
                                    MicroGraph* micro_graph)
-    : MicroContext(
+    : MicroInterpreterContext(
           MicroAllocator::Create(dummy_tensor_arena, KDummyTensorArenaSize,
                                  GetMicroErrorReporter()),
           nullptr, micro_graph),
@@ -71,8 +73,7 @@ void* FakeMicroContext::AllocatePersistentBuffer(size_t bytes) {
   // apply the buffer alignment like MicroAllocator.
   // The buffer alignment is potentially wasteful but allows the
   // fake_micro_context to work correctly with optimized kernels.
-  return allocator_->AllocatePersistentBuffer(bytes,
-                                              MicroArenaBufferAlignment());
+  return allocator_->AllocateFromTail(bytes, MicroArenaBufferAlignment());
 }
 
 TfLiteStatus FakeMicroContext::RequestScratchBufferInArena(size_t bytes,
@@ -89,19 +90,34 @@ TfLiteStatus FakeMicroContext::RequestScratchBufferInArena(size_t bytes,
   // for the lifetime of model. This means that the arena size in the tests will
   // be more than what we would have if the scratch buffers could share memory.
   scratch_buffers_[scratch_buffer_count_] =
-      allocator_->AllocatePersistentBuffer(bytes, MicroArenaBufferAlignment());
+      allocator_->AllocateFromTail(bytes, MicroArenaBufferAlignment());
   TFLITE_DCHECK(scratch_buffers_[scratch_buffer_count_] != nullptr);
-
+#if TF_LITE_MICRO_AUTO_DUMP_POINTER_TABLES
+  size_t offset =
+    static_cast<size_t>(scratch_buffers_[scratch_buffer_count_]
+                        - allocator_->GetHeadBuffer());
+  scratch_buffer_count_++;
+  *buffer_index = tflite::micro::recordScratchBuffer(offset);
+#else
   *buffer_index = scratch_buffer_count_++;
+#endif
+
   return kTfLiteOk;
 }
 
 void* FakeMicroContext::GetScratchBuffer(int buffer_index) {
+#if TF_LITE_MICRO_AUTO_DUMP_POINTER_TABLES || TF_LITE_MICRO_AUTO_DUMPED_OPDATA
+  auto offset = tflite::micro::getRecordedScratchBufferStart(buffer_index);
+  TFLITE_DCHECK(offset != static_cast<ptrdiff_t>(0xdeadbeef)); // Sanity check: requested index matches recorded index?
+  return allocator_->GetHeadBuffer() + offset;
+#else
   TFLITE_DCHECK(scratch_buffer_count_ <= kNumScratchBuffers_);
   if (buffer_index >= scratch_buffer_count_) {
     return nullptr;
   }
   return scratch_buffers_[buffer_index];
+#endif
+
 }
 
 }  // namespace tflite

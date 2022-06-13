@@ -21,7 +21,7 @@ limitations under the License.
 
 namespace tflite {
 // A fake of MicroContext for kernel util tests.
-class FakeMicroContext : public MicroContext {
+class FakeMicroContext : public MicroInterpreterContext {
  public:
   FakeMicroContext(TfLiteTensor* tensors, SimpleMemoryAllocator* allocator,
                    MicroGraph* micro_graph);
