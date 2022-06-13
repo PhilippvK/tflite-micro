@@ -37,8 +37,24 @@ limitations under the License.
 
 namespace tflite {
 
+
 class MicroInterpreter {
  public:
+
+ // A.Stevens Infineon technologies: add hooks for memory requests to provided
+ // robust basis for offline pre-interpretation of Init/Prepare phases.
+
+   struct TfLiteContextHooks {
+
+    decltype(TfLiteContext::AllocatePersistentBuffer)  AllocatePersistentBuffer;
+
+    decltype(TfLiteContext::RequestScratchBufferInArena) RequestScratchBufferInArena;
+
+    decltype(TfLiteContext::GetScratchBuffer) GetScratchBuffer;
+
+    void (*SetNodeIndex)(const struct TfLiteContext* context, int graph, size_t node);
+  };
+
   // The lifetime of the model, op resolver, tensor arena, error reporter,
   // resource variables, and profiler must be at least as long as that of the
   // interpreter object, since the interpreter may need to access them at any
@@ -116,6 +132,13 @@ class MicroInterpreter {
     return nullptr;
   }
 
+
+  size_t operators_size() const { return model_->subgraphs()->Get(0)->operators()->size(); }
+
+  inline const NodeAndRegistration node_and_registration(int graph, size_t node) const {
+    return graph_.GetAllocations()->node_and_registrations[node];
+  }
+
   // Reset all variable tensors to the default value.
   TfLiteStatus ResetVariableTensors();
 
@@ -135,6 +158,24 @@ class MicroInterpreter {
   // arena_used_bytes() + 16.
   size_t arena_used_bytes() const { return allocator_.used_bytes(); }
 
+  // A.Stevens Infineon technologies:
+  // Provides entry-pointer for intercepting allocation etc for
+  // off-line pre-interpretation/instrumentation and similar.
+  //
+  inline TfLiteContext *getTFLContext()  {
+    return &context_;
+  }
+
+  inline TfLiteContextHooks *getHooks() const {
+    return hooks_;
+  }
+
+
+  inline void setHooks( TfLiteContextHooks *hooks) {
+    hooks_ = hooks;
+  }
+
+
  protected:
   const MicroAllocator& allocator() const { return allocator_; }
   const TfLiteContext& context() const { return context_; }
@@ -146,6 +187,11 @@ class MicroInterpreter {
 
   // Gets the current subgraph index used from within context methods.
   int get_subgraph_index() { return graph_.GetCurrentSubgraphIndex(); }
+
+  // A.Stevens Infineon technologies: default for SetNodeIndex hoook used
+  // to associate allocations with individual ops when offline pre-interpreting.
+  // No-op in normal interpreter usage.
+  static void NotifyNodeIndex(const struct TfLiteContext* context, int graph, size_t node);
 
   const Model* model_;
   const MicroOpResolver& op_resolver_;
@@ -164,8 +210,12 @@ class MicroInterpreter {
   TfLiteTensor** input_tensors_;
   TfLiteTensor** output_tensors_;
 
-  MicroContext micro_context_;
+  MicroInterpreterContext micro_context_;
+
+  TfLiteContextHooks *hooks_;
+  static TfLiteContextHooks default_hooks_;
 };
+
 
 }  // namespace tflite
 
