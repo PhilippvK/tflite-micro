@@ -87,6 +87,10 @@ class MicroGraph {
   // Get the resource variables for this TFLM graph.
   MicroResourceVariables* GetResourceVariables() { return resource_variables_; }
 
+  //  A.Stevens Infineon Technologies; Notify current node being Init/Prepare/Eval -ed
+  // E.g. for offline pre-interpretation / code-generaiton.
+  void NotifyCurrentNode( int graph, size_t node ) { context_->NotifyNodeIndex(context_, graph, node); }
+
  private:
   TfLiteContext* context_;
   const Model* model_;
