@@ -47,7 +47,8 @@ class MicroErrorReporter : public ErrorReporter {
   ~MicroErrorReporter() override {}
   int Report(const char* format, va_list args) override;
 
- private:
+// IFX A.stevens: 2021-07-11: private breaks with-rtti build:
+// private:
   TF_LITE_REMOVE_VIRTUAL_DELETE
 };
 
