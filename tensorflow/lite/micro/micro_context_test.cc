@@ -26,7 +26,7 @@ using ::tflite::testing::IntArrayFromInts;
 namespace tflite {
 namespace {
 
-tflite::MicroInterpreterContext CreateMicroContext() {
+tflite::MicroContext CreateMicroContext() {
   // Some targets do not support dynamic memory (i.e., no malloc or new), thus,
   // the test need to place non-transient memories in static variables. This is
   // safe because tests are guaranteed to run serially.
@@ -41,7 +41,7 @@ tflite::MicroInterpreterContext CreateMicroContext() {
   MicroGraph* micro_graph = new (micro_graph_placement_buffer)
       MicroGraph(nullptr, nullptr, nullptr, nullptr);
 
-  tflite::MicroInterpreterContext micro_context(micro_allocator, model, micro_graph);
+  tflite::MicroContext micro_context(micro_allocator, model, micro_graph);
   return micro_context;
 }
 
@@ -57,7 +57,7 @@ TF_LITE_MICRO_TESTS_BEGIN
 
 // Ensures that a regular set and get pair works ok.
 TF_LITE_MICRO_TEST(TestSetGetExternalContextSuccess) {
-  auto micro_context = tflite::CreateMicroContext();
+  tflite::MicroContext micro_context = tflite::CreateMicroContext();
 
   tflite::TestExternalContextPayloadData payload;
   TF_LITE_MICRO_EXPECT_EQ(kTfLiteOk,
@@ -72,7 +72,7 @@ TF_LITE_MICRO_TEST(TestSetGetExternalContextSuccess) {
 }
 
 TF_LITE_MICRO_TEST(TestGetExternalContextWithoutSetShouldReturnNull) {
-  auto micro_context = tflite::CreateMicroContext();
+  tflite::MicroContext micro_context = tflite::CreateMicroContext();
 
   tflite::TestExternalContextPayloadData* returned_external_context =
       reinterpret_cast<tflite::TestExternalContextPayloadData*>(
@@ -83,7 +83,7 @@ TF_LITE_MICRO_TEST(TestGetExternalContextWithoutSetShouldReturnNull) {
 }
 
 TF_LITE_MICRO_TEST(TestSetExternalContextCanOnlyBeCalledOnce) {
-  auto micro_context = tflite::CreateMicroContext();
+  tflite::MicroContext micro_context = tflite::CreateMicroContext();
 
   tflite::TestExternalContextPayloadData payload;
 
@@ -96,14 +96,14 @@ TF_LITE_MICRO_TEST(TestSetExternalContextCanOnlyBeCalledOnce) {
 }
 
 TF_LITE_MICRO_TEST(TestSetExternalContextToNullShouldFail) {
-  auto micro_context = tflite::CreateMicroContext();
+  tflite::MicroContext micro_context = tflite::CreateMicroContext();
 
   TF_LITE_MICRO_EXPECT_EQ(kTfLiteError,
                           micro_context.set_external_context(nullptr));
 }
 
 TF_LITE_MICRO_TEST(TestGetTempInputTensor) {
-  auto micro_context = tflite::CreateMicroContext();
+  tflite::MicroContext micro_context = tflite::CreateMicroContext();
 
   TfLiteNode node;
   int input_data[] = {2, 0, 1};
@@ -122,7 +122,7 @@ TF_LITE_MICRO_TEST(TestGetTempInputTensor) {
 }
 
 TF_LITE_MICRO_TEST(TestGetTempOutputTensor) {
-  auto micro_context = tflite::CreateMicroContext();
+  tflite::MicroContext micro_context = tflite::CreateMicroContext();
 
   TfLiteNode node;
   int output_data[] = {1, 0};
