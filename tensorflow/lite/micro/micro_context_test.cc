@@ -31,7 +31,7 @@ tflite::MicroContext CreateMicroContext() {
   // the test need to place non-transient memories in static variables. This is
   // safe because tests are guaranteed to run serially.
   constexpr size_t kMicroGraphPlacementBufferSize = 1024;
-  alignas(16) static uint8_t micro_graph_placement_buffer[kMicroGraphPlacementBufferSize];
+  static uint8_t micro_graph_placement_buffer[kMicroGraphPlacementBufferSize];
   constexpr size_t kArenaSize = 1024;
   static uint8_t tensor_arena[kArenaSize];
 
