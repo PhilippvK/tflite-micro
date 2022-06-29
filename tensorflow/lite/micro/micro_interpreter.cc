@@ -219,7 +219,7 @@ TfLiteStatus MicroInterpreter::AllocateTensors() {
   context_.AllocatePersistentBuffer = hooks_->AllocatePersistentBuffer;
   context_.RequestScratchBufferInArena = nullptr;
   context_.GetScratchBuffer = nullptr;
-  context_.NotifyNodeIndex = NotifyNodeIndex;
+  context_.NotifyNodeIndex = hooks_->NotifyNodeIndex;
   context_.GetExternalContext = nullptr;
   TF_LITE_ENSURE_STATUS(graph_.InitSubgraphs());
 
@@ -345,7 +345,8 @@ TfLiteStatus MicroInterpreter::SetMicroExternalContext(
 }
 
 
-void MicroInterpreter::NotifyNodeIndex(const struct TfLiteContext* context,  int graph, size_t node) {
+
+void MicroInterpreter::NotifyNodeIndex(const struct TfLiteContext* context,  size_t node) {
 
 }
 

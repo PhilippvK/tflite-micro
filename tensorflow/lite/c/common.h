@@ -842,7 +842,7 @@ typedef struct TfLiteContext {
                                    size_t* bytes);
   // A.Stevens Infineon Technologies - called by intepreter to identify node
   // currently being Init/Prepare/Eval -ed (used for offline pre-interpretation)
-  void (*NotifyNodeIndex)(const struct TfLiteContext* context, int, size_t);
+  void (*NotifyNodeIndex)(const struct TfLiteContext* context, size_t);
 } TfLiteContext;
 
 // `TfLiteRegistrationExternal` is an external version of `TfLiteRegistration`

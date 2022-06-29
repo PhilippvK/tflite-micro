@@ -52,7 +52,7 @@ class MicroInterpreter {
 
     decltype(TfLiteContext::GetScratchBuffer) GetScratchBuffer;
 
-    void (*SetNodeIndex)(const struct TfLiteContext* context, int graph, size_t node);
+    decltype(TfLiteContext::NotifyNodeIndex) NotifyNodeIndex;
   };
 
   // The lifetime of the model, op resolver, tensor arena, error reporter,
@@ -191,7 +191,7 @@ class MicroInterpreter {
   // A.Stevens Infineon technologies: default for SetNodeIndex hoook used
   // to associate allocations with individual ops when offline pre-interpreting.
   // No-op in normal interpreter usage.
-  static void NotifyNodeIndex(const struct TfLiteContext* context, int graph, size_t node);
+  static void NotifyNodeIndex(const struct TfLiteContext* context, size_t node);
 
   const Model* model_;
   const MicroOpResolver& op_resolver_;

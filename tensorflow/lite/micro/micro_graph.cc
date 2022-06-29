@@ -24,6 +24,9 @@ limitations under the License.
 #include "tensorflow/lite/micro/micro_profiler.h"
 #include "tensorflow/lite/schema/schema_generated.h"
 
+
+#include "tensorflow/lite/micro/micro_invoke_log.h"
+
 namespace tflite {
 namespace {
 
@@ -53,13 +56,15 @@ MicroGraph::MicroGraph(TfLiteContext* context, const Model* model,
 MicroGraph::~MicroGraph() {}
 
 TfLiteStatus MicroGraph::InitSubgraphs() {
+  size_t node_index = 0;
   int previous_subgraph_idx = current_subgraph_index_;
-
   for (size_t subgraph_idx = 0; subgraph_idx < subgraphs_->size();
        subgraph_idx++) {
     current_subgraph_index_ = subgraph_idx;
     uint32_t operators_size = NumSubgraphOperators(model_, subgraph_idx);
     for (size_t i = 0; i < operators_size; ++i) {
+      context_->NotifyNodeIndex(context_, node_index);
+      ++node_index;
       TfLiteNode* node =
           &(subgraph_allocations_[subgraph_idx].node_and_registrations[i].node);
       const TfLiteRegistration* registration =
@@ -82,18 +87,19 @@ TfLiteStatus MicroGraph::InitSubgraphs() {
     }
   }
   current_subgraph_index_ = previous_subgraph_idx;
-
   return kTfLiteOk;
 }
 
 TfLiteStatus MicroGraph::PrepareSubgraphs() {
   int previous_subgraph_idx = current_subgraph_index_;
-
+  size_t node_index = 0;
   for (size_t subgraph_idx = 0; subgraph_idx < subgraphs_->size();
        subgraph_idx++) {
     current_subgraph_index_ = subgraph_idx;
     uint32_t operators_size = NumSubgraphOperators(model_, subgraph_idx);
     for (size_t i = 0; i < operators_size; ++i) {
+      context_->NotifyNodeIndex(context_, node_index);
+      ++node_index;
       TfLiteNode* node =
           &(subgraph_allocations_[subgraph_idx].node_and_registrations[i].node);
       const TfLiteRegistration* registration =
@@ -112,7 +118,6 @@ TfLiteStatus MicroGraph::PrepareSubgraphs() {
     }
   }
   current_subgraph_index_ = previous_subgraph_idx;
-
   return kTfLiteOk;
 }
 
@@ -142,6 +147,7 @@ TfLiteStatus MicroGraph::FreeSubgraphs() {
   return kTfLiteOk;
 }
 
+
 TfLiteStatus MicroGraph::InvokeSubgraph(int subgraph_idx) {
   int previous_subgraph_idx = current_subgraph_index_;
   current_subgraph_index_ = subgraph_idx;
@@ -153,6 +159,7 @@ TfLiteStatus MicroGraph::InvokeSubgraph(int subgraph_idx) {
   }
   uint32_t operators_size = NumSubgraphOperators(model_, subgraph_idx);
   for (size_t i = 0; i < operators_size; ++i) {
+
     TfLiteNode* node =
         &(subgraph_allocations_[subgraph_idx].node_and_registrations[i].node);
     const TfLiteRegistration* registration = subgraph_allocations_[subgraph_idx]
@@ -169,6 +176,9 @@ TfLiteStatus MicroGraph::InvokeSubgraph(int subgraph_idx) {
 #endif
 
     TFLITE_DCHECK(registration->invoke);
+#if LOG_OP_INPUTS
+    tflite::logOpInvoke(context_, node);
+#endif
     TfLiteStatus invoke_status = registration->invoke(context_, node);
 
     // All TfLiteTensor structs used in the kernel are allocated from temp
