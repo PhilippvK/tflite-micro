@@ -109,15 +109,15 @@ TfLiteTensor* MicroInterpreterContext::AllocateTempOutputTensor(const TfLiteNode
   return AllocateTempTfLiteTensor(tensor_index);
 }
 
-TfLiteTensor* MicroInterpreterContext::AllocateTempIntermediateTensor(
-    const TfLiteNode* node, int index) {
-  const int tensor_index = GetTensorIndex(index, node->intermediates->size,
-                                          node->intermediates->data);
-  if (tensor_index < 0) {
-    return nullptr;
-  }
-  return AllocateTempTfLiteTensor(tensor_index);
-}
+// TfLiteTensor* MicroInterpreterContext::AllocateTempIntermediateTensor(
+//     const TfLiteNode* node, int index) {
+//   const int tensor_index = GetTensorIndex(index, node->intermediates->size,
+//                                           node->intermediates->data);
+//   if (tensor_index < 0) {
+//     return nullptr;
+//   }
+//   return AllocateTempTfLiteTensor(tensor_index);
+// }
 
 void MicroInterpreterContext::DeallocateTempTfLiteTensor(TfLiteTensor* tensor) {
   return allocator_->DeallocateTempTfLiteTensor(tensor);
